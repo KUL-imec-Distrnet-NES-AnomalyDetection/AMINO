@@ -51,7 +51,7 @@ class AudioDeiTEmbeddings(nn.Module):
                 ori_embeddings.patch_embeddings
             ),
             position_embedding_model=PositionalEncoding(
-                ori_embeddings.position_embeddings.size(-1), 
+                ori_embeddings.position_embeddings.size(-1),
                 ori_embeddings.patch_embeddings.num_patches * 10,
             ),
             dropout=ori_embeddings.dropout,
@@ -98,13 +98,13 @@ class AudioDeiTModel(nn.Module):
         self.model = model
 
     def forward(
-            self,
-            spectral,
-            head_mask: Optional[torch.Tensor] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-        ):
+        self,
+        spectral,
+        head_mask: Optional[torch.Tensor] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+    ):
         # spectral: batchx1x128x1024
         # output: batchx768
         embedding_output = self.embeddings(spectral)
@@ -117,7 +117,9 @@ class AudioDeiTModel(nn.Module):
         )
         sequence_output = encoder_outputs[0]
         sequence_output = self.layernorm(sequence_output)
-        pooled_output = self.pooler(sequence_output) if self.pooler is not None else None
+        pooled_output = (
+            self.pooler(sequence_output) if self.pooler is not None else None
+        )
         return sequence_output, pooled_output
 
 
