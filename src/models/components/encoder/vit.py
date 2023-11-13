@@ -2,7 +2,6 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-
 from transformers import DeiTModel
 
 from src.models.components.layer.embedding import PositionalEncoding

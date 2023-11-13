@@ -1,40 +1,44 @@
 import os
+
 import torch
 import torchaudio
-from torchdata.datapipes.iter import IterableWrapper
-
 from tensordict import TensorDict
+from torchdata.datapipes.iter import IterableWrapper
 
 from src.data.components.base_datapipes import DPAudioRead
 
-def mimii_due_file_list_generator(
-    path,  is_train="True"
-):
+
+def mimii_due_file_list_generator(path, is_train="True"):
     out_list = list()
     if is_train:
         for file in os.listdir(path):
             wav_split = file.split("_")
             assert len(wav_split) > 6, f"the file name {file} in {path} is not correct"
-            out_list.append({
-                "path": os.path.join(path, file),
-                "section": int(wav_split[1]),
-                "domain": wav_split[2],
-                "label": wav_split[4],
-                "id": wav_split[5],
-                "strength": wav_split[7],
-            })
+            out_list.append(
+                {
+                    "path": os.path.join(path, file),
+                    "section": int(wav_split[1]),
+                    "domain": wav_split[2],
+                    "label": wav_split[4],
+                    "id": wav_split[5],
+                    "strength": wav_split[7],
+                }
+            )
     else:
         for file in os.listdir(path):
             wav_split = file.split("_")
             assert len(wav_split) > 5, f"the file name {file} in {path} is not correct"
-            out_list.append({
-                "path": os.path.join(path, file),
-                "section": int(wav_split[1]),
-                "domain": wav_split[2],
-                "label": wav_split[4],
-                "id": wav_split[5],
-            })
+            out_list.append(
+                {
+                    "path": os.path.join(path, file),
+                    "section": int(wav_split[1]),
+                    "domain": wav_split[2],
+                    "label": wav_split[4],
+                    "id": wav_split[5],
+                }
+            )
     return out_list
+
 
 class MimiidueDataset(torch.utils.data.Dataset):
     def __init__(self, path, is_train):
@@ -48,13 +52,20 @@ class MimiidueDataset(torch.utils.data.Dataset):
         tensordict = TensorDict({"audio": audio}, batch_size=1)
         return tensordict, item
 
-def mimii_due_data_pipe(path, is_train):
+
+def mimii_due_datapipe(path, is_train):
     data_list = mimii_due_file_list_generator(path, is_train)
     orginal_dp = IterableWrapper(data_list)
     return DPAudioRead(orginal_dp)
 
+
 if __name__ == "__main__":
+    from functools import partial
+
     import rootutils
+    from torchdata.datapipes.iter import Batcher, Shuffler
+
+    from src.data.components.base_datapipes import build_datapipe
 
     rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
     root = rootutils.find_root(search_from=__file__, indicator=".project-root")
@@ -71,10 +82,23 @@ if __name__ == "__main__":
                 break
             print(f"{i}th item in {name} dataset: {item}")
 
-    tr_datapipes = mimii_due_data_pipe(tr_path, is_train=True)
-    cv_datapipes = mimii_due_data_pipe(cv_path, is_train=False)
-    for name, datapipe in zip(["train", "val"], [tr_datapipes, cv_datapipes]):
+    tr_datapipe = mimii_due_datapipe(tr_path, is_train=True)
+    cv_datapipe = mimii_due_datapipe(cv_path, is_train=False)
+    for name, datapipe in zip(["train", "val"], [tr_datapipe, cv_datapipe]):
         for i, item in enumerate(datapipe):
             if i > 10:
                 break
-            print(f"{i}th item in {name} datapipe: {item}")    
+            print(f"{i}th item in {name} datapipe: {item}")
+
+    process_dps = [
+        partial(Batcher, batch_size=5),
+    ]
+    cv_datapipe = build_datapipe([cv_datapipe], process_dps)
+    process_dps.insert(0, partial(Shuffler, buffer_size=100))
+    tr_datapipe = build_datapipe([tr_datapipe], process_dps)
+
+    for name, datapipe in zip(["train", "val"], [tr_datapipe, cv_datapipe]):
+        for i, item in enumerate(datapipe):
+            if i > 10:
+                break
+            print(f"{i}th item in {name} datapipe: {item}")

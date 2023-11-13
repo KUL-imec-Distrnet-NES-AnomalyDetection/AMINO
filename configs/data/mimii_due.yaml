@@ -1,0 +1,44 @@
+_target_: src.data.base_datamodule.DatapipeModule
+batch_size: 5
+using_dataloader2: True
+datapipes:
+  train:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.mimii_due.mimii_due_datapipe
+        path: "data/mimii_due/fan/train"
+        is_train: True
+    process_datapipes:
+      - _target_: torchdata.datapipes.iter.Shuffler
+        _partial_: True
+        buffer_size: 1000
+      - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+        _partial_: True
+      - _target_: torchdata.datapipes.iter.Batcher
+        _partial_: True
+        batch_size: ${.....batch_size}
+  val:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.mimii_due.mimii_due_datapipe
+        path: "data/mimii_due/fan/source_test"
+        is_train: False
+    process_datapipes:
+      - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+        _partial_: True
+      - _target_: torchdata.datapipes.iter.Batcher
+        _partial_: True
+        batch_size: ${.....batch_size}
+  test:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.mimii_due.mimii_due_datapipe
+        path: "data/mimii_due/fan/target_test"
+        is_train: False
+    process_datapipes: ${..val.process_datapipes}
+reading_service:
+  _target_: torchdata.dataloader2.SequentialReadingService
+  _args_:
+    # - _target_: torchdata.dataloader2.DistributedReadingService
+    - _target_: torchdata.dataloader2.MultiProcessingReadingService
+      num_workers: 4

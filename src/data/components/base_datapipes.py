@@ -1,6 +1,7 @@
 import torchaudio
-from torchdata.datapipes.iter import Mapper
 from tensordict import TensorDict
+from torchdata.datapipes.iter import Concater, Mapper
+
 
 class DPAudioRead(Mapper):
     def __init__(self, dp) -> None:
@@ -11,3 +12,10 @@ class DPAudioRead(Mapper):
         item["fs"] = fs
         tensordict = TensorDict({"audio": audio}, batch_size=1)
         return tensordict, item
+
+
+def build_datapipe(source_datapipes, process_datapipes):
+    dp = Concater(*source_datapipes)
+    for process_dp in process_datapipes:
+        dp = process_dp(dp)
+    return dp

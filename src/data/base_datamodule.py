@@ -1,5 +1,7 @@
 import torch
 from lightning import LightningDataModule
+from torch.utils.data import DataLoader
+from torchdata.dataloader2 import DataLoader2
 
 
 def basic_collect_fn(batch):
@@ -8,7 +10,7 @@ def basic_collect_fn(batch):
     return tensordict, meta_list
 
 
-class DataModule(LightningDataModule):
+class DatasetModule(LightningDataModule):
     def __init__(self, datasets, dataloader):
         super().__init__()
         self.datasets = datasets
@@ -29,11 +31,37 @@ class DataModule(LightningDataModule):
         return self.dataloader(self.datasets[datasetname])
 
 
+class DatapipeModule(LightningDataModule):
+    def __init__(
+        self, datapipes, reading_service, batch_size=5, using_dataloader2=False
+    ):
+        super().__init__()
+        self.datapipes = datapipes
+        self.reading_service = reading_service
+        self.batch_size = batch_size
+        self.dataloader = DataLoader2 if using_dataloader2 else DataLoader
+
+    def train_dataloader(self):
+        return self.x_dataloader("train")
+
+    def val_dataloader(self):
+        return self.x_dataloader("val")
+
+    def test_dataloader(self):
+        return self.x_dataloader("test")
+
+    def x_dataloader(self, datasetname):
+        if (datapipe := self.datapipes[datasetname]) is None:
+            return None
+
+        return self.dataloader(datapipe, reading_service=self.reading_service)
+
+
 if __name__ == "__main__":
-    import rootutils
     import hydra
+    import rootutils
     from lightning import LightningDataModule
-    from omegeconf import OmegaConf
+    from omegaconf import OmegaConf
 
     rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
     # ------------------------------------------------------------------------------------ #
@@ -60,4 +88,12 @@ if __name__ == "__main__":
     root = rootutils.find_root(search_from=__file__, indicator=".project-root")
     path = root / "configs" / "data" / "mimii_due.yaml"
     cfg = OmegaConf.load(path)
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
+    datamodule: LightningDataModule = hydra.utils.instantiate(cfg)
+    print(f"{datamodule=}")
+    for name, loader in zip(
+        ["train", "val"], [datamodule.train_dataloader(), datamodule.val_dataloader()]
+    ):
+        for i, batch in enumerate(loader):
+            if i > 10:
+                break
+            print(f"{i}th batch in {name}: {batch}")
