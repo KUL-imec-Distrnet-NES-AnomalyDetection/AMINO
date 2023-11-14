@@ -76,11 +76,6 @@ class AudioDeiTModel(nn.Module):
     def __init__(
         self,
         model_name="facebook/deit-tiny-distilled-patch16-224",
-        num_classes=1000,
-        fstride=10,
-        tstride=10,
-        input_fdim=128,
-        input_tdim=1024,
     ):
         super().__init__()
         assert (
@@ -90,11 +85,6 @@ class AudioDeiTModel(nn.Module):
         self.embeddings = AudioDeiTEmbeddings.from_DeiTEmbeddings(model.embeddings)
         self.encoder = model.encoder
         self.layernorm = model.layernorm
-        self.pooler = model.pooler
-        # self.model.embeddings.patch_embeddings = deit_patch_embedding_model_convert(
-        #     self.model.embeddings.patch_embeddings
-        # )
-        self.model = model
 
     def forward(
         self,
@@ -104,8 +94,6 @@ class AudioDeiTModel(nn.Module):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ):
-        # spectral: batchx1x128x1024
-        # output: batchx768
         embedding_output = self.embeddings(spectral)
         encoder_outputs = self.encoder(
             embedding_output,
@@ -116,21 +104,24 @@ class AudioDeiTModel(nn.Module):
         )
         sequence_output = encoder_outputs[0]
         sequence_output = self.layernorm(sequence_output)
-        pooled_output = (
-            self.pooler(sequence_output) if self.pooler is not None else None
-        )
-        return sequence_output, pooled_output
+        return sequence_output
 
 
 if __name__ == "__main__":
-    import torchaudio
+    from torchaudio.transforms import MelSpectrogram
 
-    audio = torch.randn(1, 16000)
     fs = 16000
-
-    speectral_tranform = torchaudio.transforms.MelSpectrogram()
-    spectrogram = speectral_tranform(audio)
+    duration = 5
+    batch_size = 5
+    spectral_tranform = MelSpectrogram()
     model = AudioDeiTModel()
-    output = model(spectrogram.unsqueeze(1))
-    for each in output:
-        print(each.shape)
+
+    audio = torch.randn(1, duration * fs).unsqueeze(1)
+    spectrogram = spectral_tranform(audio)
+    sequence_output = model(spectrogram)
+    print(sequence_output.shape)
+
+    audio = torch.randn(batch_size, 1, duration * fs)
+    spectrogram = spectral_tranform(audio)
+    sequence_output = model(spectrogram)
+    print(sequence_output.shape)

@@ -39,6 +39,6 @@ datapipes:
 reading_service:
   _target_: torchdata.dataloader2.SequentialReadingService
   _args_:
-    # - _target_: torchdata.dataloader2.DistributedReadingService
+    - _target_: src.data.components.reading_service.DistributedReadingService
     - _target_: torchdata.dataloader2.MultiProcessingReadingService
       num_workers: 4
