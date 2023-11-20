@@ -4,13 +4,14 @@ from torchdata.datapipes.iter import Concater, Mapper
 
 
 class DPAudioRead(Mapper):
-    def __init__(self, dp) -> None:
+    def __init__(self, dp):
         super().__init__(dp, self.item_fn)
 
     def item_fn(self, item):
-        audio, fs = torchaudio.load(item["path"])
-        item["fs"] = fs
+        audio, fs = torchaudio.load(item[1]["path"])
+        item[1]["fs"] = fs
         tensordict = TensorDict({"audio": audio}, batch_size=1)
+        item[0].set("ausios", audio)
         return tensordict, item
 
 

@@ -55,14 +55,15 @@ class MimiidueDataset(torch.utils.data.Dataset):
 
 def mimii_due_datapipe(path, is_train):
     data_list = mimii_due_file_list_generator(path, is_train)
+    data_list = [[TensorDict(dict(), batch_size=1), x] for x in data_list]
     orginal_dp = IterableWrapper(data_list)
-    return DPAudioRead(orginal_dp)
+    return orginal_dp
 
 
 if __name__ == "__main__":
     from functools import partial
-
     import rootutils
+
     from torchdata.datapipes.iter import Batcher, Shuffler
 
     from src.data.components.base_datapipes import build_datapipe
@@ -82,8 +83,8 @@ if __name__ == "__main__":
                 break
             print(f"{i}th item in {name} dataset: {item}")
 
-    tr_datapipe = mimii_due_datapipe(tr_path, is_train=True)
-    cv_datapipe = mimii_due_datapipe(cv_path, is_train=False)
+    tr_datapipe = DPAudioRead(mimii_due_datapipe(tr_path, is_train=True))
+    cv_datapipe = DPAudioRead(mimii_due_datapipe(cv_path, is_train=False))
     for name, datapipe in zip(["train", "val"], [tr_datapipe, cv_datapipe]):
         for i, item in enumerate(datapipe):
             if i > 10:
