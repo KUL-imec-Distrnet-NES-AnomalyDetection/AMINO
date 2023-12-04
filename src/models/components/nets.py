@@ -20,6 +20,21 @@ class TimerSeriesClassifier(nn.Module):
         # x: Batch, Classify
         return x
 
+class SingleEncMultiDec(nn.Module):
+    def __init__(self, encoder, decoders) -> None:
+        super().__init__()
+        self.encoder = encoder
+        self.decoders = nn.ModuleDict(decoders)
+    
+    def forward(self, x):
+        # x: Batch, Time, Features
+        x = self.encoder(x)
+        # x: Batch, Time, Features
+        output = dict()
+        for name, decoder in self.decoders.items():
+            output[name] = decoder(x)
+        return output
+
 if __name__ == "__main__": 
     from functools import partial
     from torchaudio.transforms import MelSpectrogram

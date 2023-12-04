@@ -9,7 +9,7 @@ class LabelAdder(Mapper):
         self.label = torch.tensor(label).reshape(1, -1)
     
     def item_func(self, item):
-        item[1].set("label", self.label)
+        item[1].set(["labels", "classify"], self.label)
         return item
 
 

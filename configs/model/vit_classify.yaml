@@ -1,0 +1,43 @@
+_target_: src.models.module.AdModule
+
+net:
+  _target_: src.models.components.nets.SingleEncMultiDec
+  encoder:
+    _target_: src.models.components.encoder.vit.AudioDeiT
+  decoders:
+    classify:
+      _target_: src.models.components.decoder.buncher_classifier.ClassifierBuncher
+      classifier:
+        _target_: torch.nn.Linear
+        in_features: 192
+        out_features: 5
+      buncher:
+        _target_: src.models.components.layer.pooler.AvgPooler
+
+losses:
+  classify:
+    ce:
+      _target_: torch.nn.CrossEntropyLoss
+
+losses_weights:
+  classify:
+    classify: 1.0
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.001
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.1
+  patience: 10
+
+scheduler_conf:
+  monitor": "val/loss/total"
+  interval": "epoch"
+  frequency": 1
+  strict: true

@@ -72,7 +72,7 @@ class AusdioDeiTPatchEmbeddings(nn.Module):
         return x
 
 
-class AudioDeiTModel(nn.Module):
+class AudioDeiT(nn.Module):
     def __init__(
         self,
         model_name="facebook/deit-tiny-distilled-patch16-224",
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     duration = 5
     batch_size = 5
     spectral_tranform = MelSpectrogram()
-    model = AudioDeiTModel()
+    model = AudioDeiT()
 
     audio = torch.randn(1, duration * fs).unsqueeze(1)
     spectrogram = spectral_tranform(audio)
