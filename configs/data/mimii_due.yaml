@@ -1,6 +1,12 @@
 _target_: src.data.base_datamodule.DatapipeModule
 batch_size: 5
 using_dataloader2: True
+reading_service:
+  _target_: torchdata.dataloader2.SequentialReadingService
+  _args_:
+    - _target_: src.data.components.reading_service.DistributedReadingService
+    - _target_: torchdata.dataloader2.MultiProcessingReadingService
+      num_workers: 4
 datapipes:
   train:
     _target_: src.data.components.base_datapipes.build_datapipe
@@ -36,9 +42,3 @@ datapipes:
         path: "data/mimii_due/fan/target_test"
         is_train: False
     process_datapipes: ${..val.process_datapipes}
-reading_service:
-  _target_: torchdata.dataloader2.SequentialReadingService
-  _args_:
-    - _target_: src.data.components.reading_service.DistributedReadingService
-    - _target_: torchdata.dataloader2.MultiProcessingReadingService
-      num_workers: 4

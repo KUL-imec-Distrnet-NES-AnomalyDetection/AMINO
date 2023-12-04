@@ -86,7 +86,7 @@ if __name__ == "__main__":
     log = utils.get_pylogger(__name__)
 
     root = rootutils.find_root(search_from=__file__, indicator=".project-root")
-    path = root / "configs" / "data" / "mimii_due.yaml"
+    path = root / "configs" / "data" / "mimii_due_classify.yaml"
     cfg = OmegaConf.load(path)
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg)
     print(f"{datamodule=}")

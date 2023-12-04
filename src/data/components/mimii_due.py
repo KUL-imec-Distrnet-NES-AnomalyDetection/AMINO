@@ -55,7 +55,7 @@ class MimiidueDataset(torch.utils.data.Dataset):
 
 def mimii_due_datapipe(path, is_train):
     data_list = mimii_due_file_list_generator(path, is_train)
-    data_list = [[TensorDict(dict(), batch_size=1), x] for x in data_list]
+    data_list = [[x, TensorDict(dict(), batch_size=1)] for x in data_list]
     orginal_dp = IterableWrapper(data_list)
     return orginal_dp
 

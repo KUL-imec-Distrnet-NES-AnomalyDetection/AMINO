@@ -1,0 +1,130 @@
+_target_: src.data.base_datamodule.DatapipeModule
+batch_size: 5
+using_dataloader2: True
+reading_service:
+  _target_: torchdata.dataloader2.SequentialReadingService
+  _args_:
+    - _target_: src.data.components.reading_service.DistributedReadingService
+    - _target_: torchdata.dataloader2.MultiProcessingReadingService
+      num_workers: 4
+datapipes:
+  train:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.classify.LabelAdder
+        label: 0
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/fan/train"
+          is_train: True
+      - _target_: src.data.components.classify.LabelAdder
+        label: 1
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/gearbox/train"
+          is_train: True
+      - _target_: src.data.components.classify.LabelAdder
+        label: 2
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/pump/train"
+          is_train: True
+      - _target_: src.data.components.classify.LabelAdder
+        label: 3
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/slider/train"
+          is_train: True
+      - _target_: src.data.components.classify.LabelAdder
+        label: 4
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/valve/train"
+          is_train: True
+    process_datapipes:
+      - _target_: torchdata.datapipes.iter.Shuffler
+        _partial_: True
+        buffer_size: 20000
+      - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+        _partial_: True
+      - _target_: src.data.components.base_datapipes.DPAudioRead
+        _partial_: True
+      - _target_: torchdata.datapipes.iter.Batcher
+        _partial_: True
+        batch_size: ${.....batch_size}
+  val:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.classify.LabelAdder
+        label: 0
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/fan/source_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 1
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/gearbox/source_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 2
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/pump/source_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 3
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/slider/source_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 4
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/valve/source_test"
+          is_train: False
+    process_datapipes:
+      - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+        _partial_: True
+      - _target_: src.data.components.base_datapipes.DPAudioRead
+        _partial_: True
+      - _target_: torchdata.datapipes.iter.Batcher
+        _partial_: True
+        batch_size: ${.....batch_size}
+  test:
+    _target_: src.data.components.base_datapipes.build_datapipe
+    source_datapipes:
+      - _target_: src.data.components.classify.LabelAdder
+        label: 0
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/fan/target_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 1
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/gearbox/target_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 2
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/pump/target_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 3
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/slider/target_test"
+          is_train: False
+      - _target_: src.data.components.classify.LabelAdder
+        label: 4
+        dp:
+          _target_: src.data.components.mimii_due.mimii_due_datapipe
+          path: "data/mimii_due/valve/target_test"
+          is_train: False
+    process_datapipes: ${..val.process_datapipes}
+

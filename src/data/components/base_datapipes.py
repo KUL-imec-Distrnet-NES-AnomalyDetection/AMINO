@@ -8,11 +8,10 @@ class DPAudioRead(Mapper):
         super().__init__(dp, self.item_fn)
 
     def item_fn(self, item):
-        audio, fs = torchaudio.load(item[1]["path"])
-        item[1]["fs"] = fs
-        tensordict = TensorDict({"audio": audio}, batch_size=1)
-        item[0].set("ausios", audio)
-        return tensordict, item
+        audio, fs = torchaudio.load(item[0]["path"])
+        item[0]["fs"] = fs
+        item[1].set("audios", audio)
+        return item
 
 
 def build_datapipe(source_datapipes, process_datapipes):

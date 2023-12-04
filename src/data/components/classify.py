@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from torchdata.datapipes.iter import IterableWrapper, Mapper
+from torchdata.datapipes.iter import Mapper
 
 class LabelAdder(Mapper):
     def __init__(self, dp, label):
@@ -9,7 +9,7 @@ class LabelAdder(Mapper):
         self.label = torch.tensor(label).reshape(1, -1)
     
     def item_func(self, item):
-        item[0].set("label", self.label)
+        item[1].set("label", self.label)
         return item
 
 
@@ -19,10 +19,9 @@ if __name__ == "__main__":
     rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
     root = rootutils.find_root(search_from=__file__, indicator=".project-root")
 
-    from torchdata.datapipes.iter import Concater, Shuffler, IterableWrapper
+    from torchdata.datapipes.iter import Concater, Shuffler
     
     from src.data.components.mimii_due import mimii_due_datapipe
-    from src.data.components.base_datapipes import DPAudioRead
     
     mimii_due_path = root / "data" / "mimii_due"
 
