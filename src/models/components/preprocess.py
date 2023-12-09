@@ -5,7 +5,7 @@ def tensor_stack_extract(batch, domain="features", key="audios"):
     return audios
 
 def domain_stack_extract(batch, domain="features"):
-    keys = batch[1][domain].keys()
+    keys = list(batch[0][1][domain].keys())
     out_dict = dict()
     for key in keys:
         out_dict[key] = tensor_stack_extract(batch, domain, key)
@@ -32,5 +32,5 @@ if __name__ == "__main__":
             if i > 10:
                 break
             # print(f"{i}th batch in {name}: {batch}")
-            audios = audio_extract(batch)
+            audios = tensor_stack_extract(batch, "features", "audios")
             print(f"{i}th audios batch in {name}: {audios.shape}")

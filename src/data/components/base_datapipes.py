@@ -10,7 +10,7 @@ class DPAudioRead(Mapper):
     def item_fn(self, item):
         audio, fs = torchaudio.load(item[0]["path"])
         item[0]["fs"] = fs
-        item[1].set(["features", "audios"], audio)
+        item[1].set(("features", "audios"), audio)
         return item
 
 

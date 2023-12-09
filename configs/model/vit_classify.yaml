@@ -3,7 +3,9 @@ _target_: src.models.module.AdModule
 net:
   _target_: src.models.components.nets.SingleEncMultiDec
   encoder:
-    _target_: src.models.components.encoder.vit.AudioDeiT
+    _target_: src.models.components.encoder.vit.WavAudioDeiT
+    spectrogram: 
+      _target_: torchaudio.transforms.MelSpectrogram
   decoders:
     classify:
       _target_: src.models.components.decoder.buncher_classifier.ClassifierBuncher
@@ -21,7 +23,13 @@ losses:
 
 losses_weights:
   classify:
-    classify: 1.0
+    ce: 1.0
+
+metrics:
+  classify:
+    acc:  
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: 5
 
 optimizer:
   _target_: torch.optim.Adam
@@ -37,7 +45,7 @@ scheduler:
   patience: 10
 
 scheduler_conf:
-  monitor": "val/loss/total"
+  monitor: "val/loss/total"
   interval": "epoch"
   frequency": 1
   strict: true

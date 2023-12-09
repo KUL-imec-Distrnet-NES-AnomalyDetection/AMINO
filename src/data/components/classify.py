@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 
 from torchdata.datapipes.iter import Mapper
 
@@ -9,7 +8,7 @@ class LabelAdder(Mapper):
         self.label = torch.tensor(label).reshape(1, -1)
     
     def item_func(self, item):
-        item[1].set(["labels", "classify"], self.label)
+        item[1].set(("labels", "classify"), self.label)
         return item
 
 

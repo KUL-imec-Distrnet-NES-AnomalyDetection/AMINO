@@ -16,7 +16,7 @@ LOG_CONFIG = {
 }
 
 def flatten_dict(data_dict, prefix=""):
-    data_dict = FlatDict(data_dict).as_dict()
+    data_dict = dict(FlatDict(data_dict, delimiter="/"))
     out_dict = {
         f"{prefix}{key}": value for key, value in data_dict.items()
     }
@@ -53,13 +53,13 @@ class AdModule(LightningModule):
         out_post = nn.ModuleDict(out_post)
         return out_post
     
-    def post(self, pred_dict, target_dict):
+    def post(self, post, pred_dict, target_dict):
         post_dict = defaultdict(dict)
-        for stage, stage_post in self.post_process.items():
+        for stage, stage_post in post.items():
             for post_name, post_func in stage_post.items():
                 post_dict[stage][post_name] = post_func(
-                    pred_dict[stage],
-                    target_dict[stage],
+                    pred_dict[stage].squeeze(),
+                    target_dict[stage].squeeze(),
                 )
         return post_dict
 
@@ -77,9 +77,9 @@ class AdModule(LightningModule):
         feature_dict = domain_stack_extract(batch, "features")
         pred_dict = self.net(feature_dict["audios"])
         label_dict = domain_stack_extract(batch, "labels")
-        loss_dict = self.losses(pred_dict, label_dict)
+        loss_dict = self.post(self.losses, pred_dict, label_dict)
         loss_dict["total"] = self.loss_merge(loss_dict, self.losses_weights)
-        metric_dict = self.metrics(pred_dict, label_dict)
+        metric_dict = self.post(self.metrics, pred_dict, label_dict)
         return feature_dict, label_dict, pred_dict, loss_dict, metric_dict
 
     def training_step(self, batch, batch_idx):
@@ -94,8 +94,8 @@ class AdModule(LightningModule):
         feature_dict, label_dict, pred_dict, loss_dict, metric_dict = self.model_step(
             batch, batch_idx
         )
-        self.log_dict(flatten_dict(loss_dict, "val/loss"), **LOG_CONFIG)
-        self.log_dict(flatten_dict(metric_dict, "val/metric"), **LOG_CONFIG)
+        self.log_dict(flatten_dict(loss_dict, "val/loss/"), **LOG_CONFIG)
+        self.log_dict(flatten_dict(metric_dict, "val/metric/"), **LOG_CONFIG)
 
     def test_step(self, batch, batch_idx):
         feature_dict, label_dict, pred_dict, loss_dict, metric_dict = self.model_step(
