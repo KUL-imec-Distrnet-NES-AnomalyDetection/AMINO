@@ -86,8 +86,8 @@ class AdModule(LightningModule):
         feature_dict, label_dict, pred_dict, loss_dict, metric_dict = self.model_step(
             batch, batch_idx
         )
-        self.log_dict(flatten_dict(loss_dict, "train/loss"), **LOG_CONFIG)
-        self.log_dict(flatten_dict(metric_dict, "train/metric"), **LOG_CONFIG)
+        self.log_dict(flatten_dict(loss_dict, "train/loss/"), **LOG_CONFIG)
+        self.log_dict(flatten_dict(metric_dict, "train/metric/"), **LOG_CONFIG)
         return loss_dict["total"]
 
     def validation_step(self, batch, batch_idx):
