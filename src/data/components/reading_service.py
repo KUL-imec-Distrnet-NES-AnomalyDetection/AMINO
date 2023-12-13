@@ -1,7 +1,6 @@
 import torch.distributed as dist
-from torchdata.dataloader2 import (
-    DistributedReadingService as _DistributedReadingService,
-)
+from torchdata.dataloader2 import \
+    DistributedReadingService as _DistributedReadingService
 from torchdata.dataloader2.graph import DataPipe
 
 from src import utils

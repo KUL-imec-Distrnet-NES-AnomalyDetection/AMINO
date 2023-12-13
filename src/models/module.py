@@ -3,36 +3,36 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from lightning import LightningModule
 from flatdict import FlatDict
+from lightning import LightningModule
 
 from src.models.components.preprocess import domain_stack_extract
 
 LOG_CONFIG = {
-    "prog_bar": True, 
-    "logger": True, 
+    "prog_bar": True,
+    "logger": True,
     "on_step": True,
     "on_epoch": True,
 }
 
+
 def flatten_dict(data_dict, prefix=""):
     data_dict = dict(FlatDict(data_dict, delimiter="/"))
-    out_dict = {
-        f"{prefix}{key}": value for key, value in data_dict.items()
-    }
+    out_dict = {f"{prefix}{key}": value for key, value in data_dict.items()}
     return out_dict
+
 
 class AdModule(LightningModule):
     def __init__(
-            self, 
-            net, 
-            losses = None,
-            losses_weights = None,
-            metrics = None,
-            optimizer: torch.optim.Optimizer = None,
-            scheduler: torch.optim.lr_scheduler = None,
-            scheduler_conf: Dict = None,
-        ):
+        self,
+        net,
+        losses=None,
+        losses_weights=None,
+        metrics=None,
+        optimizer: torch.optim.Optimizer = None,
+        scheduler: torch.optim.lr_scheduler = None,
+        scheduler_conf: Dict = None,
+    ):
         super().__init__()
         self.net = net
         self.losses = self.post_check(losses)
@@ -52,7 +52,7 @@ class AdModule(LightningModule):
             out_post[stage] = nn.ModuleDict(out_post[stage])
         out_post = nn.ModuleDict(out_post)
         return out_post
-    
+
     def post(self, post, pred_dict, target_dict):
         post_dict = defaultdict(dict)
         for stage, stage_post in post.items():
@@ -119,8 +119,8 @@ class AdModule(LightningModule):
 
 
 if __name__ == "__main__":
-    import rootutils
     import hydra
+    import rootutils
     from omegaconf import OmegaConf
 
     rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)

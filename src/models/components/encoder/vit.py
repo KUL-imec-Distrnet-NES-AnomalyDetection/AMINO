@@ -106,6 +106,7 @@ class AudioDeiT(nn.Module):
         sequence_output = self.layernorm(sequence_output)
         return sequence_output
 
+
 class WavAudioDeiT(AudioDeiT):
     def __init__(
         self,
@@ -119,6 +120,7 @@ class WavAudioDeiT(AudioDeiT):
         spectral = self.spectrogram(audio)
         sequence_output = super().forward(spectral, *args, **kwargs)
         return sequence_output
+
 
 if __name__ == "__main__":
     from torchaudio.transforms import MelSpectrogram

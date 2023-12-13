@@ -1,12 +1,12 @@
 import torch
-
 from torchdata.datapipes.iter import Mapper
+
 
 class LabelAdder(Mapper):
     def __init__(self, dp, label):
         super().__init__(dp, self.item_func)
         self.label = torch.tensor(label).reshape(1, -1)
-    
+
     def item_func(self, item):
         item[1].set(("labels", "classify"), self.label)
         return item
@@ -19,9 +19,9 @@ if __name__ == "__main__":
     root = rootutils.find_root(search_from=__file__, indicator=".project-root")
 
     from torchdata.datapipes.iter import Concater, Shuffler
-    
+
     from src.data.components.mimii_due import mimii_due_datapipe
-    
+
     mimii_due_path = root / "data" / "mimii_due"
 
     select_dict = {
@@ -64,7 +64,7 @@ if __name__ == "__main__":
                 if j > 10:
                     break
                 print(f"{name}, {i}, {j}: {batch}")
-    
+
     print("*" * 20)
     tr_datapipe = Concater(*tr_datapipes)
     tr_datapipe = Shuffler(tr_datapipe, buffer_size=20000)

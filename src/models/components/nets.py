@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 # https://github.com/qmpzzpmq/AMINO/blob/main/examples/audioset/conf/HF_enc_classifier.yaml
 class TimerSeriesClassifier(nn.Module):
     def __init__(self, encoder, classifier, buncher):
@@ -8,24 +9,25 @@ class TimerSeriesClassifier(nn.Module):
         self.encoder = encoder
         self.classifier = classifier
         self.buncher = buncher
-    
+
     def forward(self, x):
         # x: Batch, Time, Features
         x = self.encoder(x)
         # x: Batch, Time, Features
-        
+
         x = self.classifier(x)
         # x: Batch, Time, Classify
         x = self.buncher(x)
         # x: Batch, Classify
         return x
 
+
 class SingleEncMultiDec(nn.Module):
     def __init__(self, encoder, decoders) -> None:
         super().__init__()
         self.encoder = encoder
         self.decoders = nn.ModuleDict(decoders)
-    
+
     def forward(self, x):
         # x: Batch, Time, Features
         x = self.encoder(x)
@@ -35,8 +37,10 @@ class SingleEncMultiDec(nn.Module):
             output[name] = decoder(x)
         return output
 
-if __name__ == "__main__": 
+
+if __name__ == "__main__":
     from functools import partial
+
     from torchaudio.transforms import MelSpectrogram
 
     from src.models.components.encoder.vit import AudioDeiTModel

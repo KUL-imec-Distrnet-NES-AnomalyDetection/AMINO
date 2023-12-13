@@ -1,8 +1,10 @@
 import torch
 
+
 def tensor_stack_extract(batch, domain="features", key="audios"):
-    audios = torch.stack([x[1][domain][key]for x in batch], dim=0)
+    audios = torch.stack([x[1][domain][key] for x in batch], dim=0)
     return audios
+
 
 def domain_stack_extract(batch, domain="features"):
     keys = list(batch[0][1][domain].keys())
@@ -10,7 +12,8 @@ def domain_stack_extract(batch, domain="features"):
     for key in keys:
         out_dict[key] = tensor_stack_extract(batch, domain, key)
     return out_dict
-    
+
+
 if __name__ == "__main__":
     import hydra
     import rootutils

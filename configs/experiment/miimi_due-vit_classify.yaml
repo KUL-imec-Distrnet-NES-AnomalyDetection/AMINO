@@ -1,0 +1,8 @@
+# @package _global_
+
+callbacks:
+  lr_monitor:
+    logging_interval: "step"
+    # logging_interval: "epoch"
+
+task_name: "miimi_due-vit_classify_warmpup"

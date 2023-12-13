@@ -62,8 +62,8 @@ def mimii_due_datapipe(path, is_train):
 
 if __name__ == "__main__":
     from functools import partial
-    import rootutils
 
+    import rootutils
     from torchdata.datapipes.iter import Batcher, Shuffler
 
     from src.data.components.base_datapipes import build_datapipe

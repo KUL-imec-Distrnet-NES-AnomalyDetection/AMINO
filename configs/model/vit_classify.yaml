@@ -6,6 +6,8 @@ net:
     _target_: src.models.components.encoder.vit.WavAudioDeiT
     spectrogram: 
       _target_: torchaudio.transforms.MelSpectrogram
+      n_fft: 512
+      n_mels: 80 
   decoders:
     classify:
       _target_: src.models.components.decoder.buncher_classifier.ClassifierBuncher
@@ -33,19 +35,48 @@ metrics:
 
 optimizer:
   _target_: torch.optim.Adam
-  _partial_: true
-  lr: 0.001
+  _partial_: True
+  lr: 0.0005
   weight_decay: 0.0
 
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+#   _partial_: True
+#   mode: min
+#   factor: 0.7
+#   patience: 3
+
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+#   _partial_: True
+#   T_0: 1
+#   T_mult: 2
+
 scheduler:
-  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
-  _partial_: true
-  mode: min
-  factor: 0.1
-  patience: 10
+  _target_: cosine_annealing_warmup.CosineAnnealingWarmupRestarts
+  _partial_: True
+  # worse name, actually it is the number of epochs, equals torch.optim.lr_scheduler.CosineAnnealingWarmRestarts.CosineAnnealingWarmRestarts.T_0
+  first_cycle_steps: 10 
+  # worse name, actually it is the number of epochs
+  warmup_steps: 3
+  # equals torch.optim.lr_scheduler.CosineAnnealingWarmRestarts.CosineAnnealingWarmRestarts.T_mult
+  cycle_mult: 2.0
+  gamma: 0.5
+  max_lr: ${..optimizer.lr}
+  min_lr: 1e-6
 
 scheduler_conf:
-  monitor: "val/loss/total"
+  # Metric to to monitor for schedulers like `ReduceLROnPlateau`
+  monitor: "val/loss/total_epoch"
+  # The unit of the scheduler's step size, could also be 'step'.
+  # 'epoch' updates the scheduler on epoch end whereas 'step'
+  # updates it after a optimizer update.
   interval": "epoch"
-  frequency": 1
-  strict: true
+  # How many epochs/steps should pass between calls to
+  # `scheduler.step()`. 1 corresponds to updating the learning
+  # rate after every epoch/step.
+  frequency: 1
+  # If set to `True`, will enforce that the value specified 'monitor'
+  # is available when the scheduler is updated, thus stopping
+  # training if not found. If set to `False`, it will only produce a warning
+  strict: True
