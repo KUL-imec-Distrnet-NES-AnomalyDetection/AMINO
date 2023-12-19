@@ -1,0 +1,5 @@
+#TODO TASK
+1. Add GMM-decoder line to this framewrok (refere AMINO2).
+2. Write the CPC-decoder inference.
+3. Using CNN-based encoder (which trained by ID classification) to combine decoders.
+4. Using ViT-based encoder (which trained by machine type classification) to combine decoders.
