@@ -127,4 +127,5 @@ def main(cfg: DictConfig) -> Optional[float]:
 
 
 if __name__ == "__main__":
+    utils.register_new_resolver()
     main()

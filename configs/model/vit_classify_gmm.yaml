@@ -1,26 +1,47 @@
-_target_: src.models.module.AdModule
+_target_: src.models.module.GMMModule
 
 net:
-  _target_: src.models.components.nets.SingleEncMultiDec
+  _target_: src.models.components.nets.SingleEncMultiDecWithGMM
+  spectrogram: 
+    _target_: torchaudio.transforms.MelSpectrogram
+    n_fft: 512
+    n_mels: 80 
   encoder:
-    _target_: src.models.components.encoder.vit.WavAudioDeiT
-    spectrogram: 
-      _target_: torchaudio.transforms.MelSpectrogram
-      n_fft: 512
-      n_mels: 80 
+    _target_: src.models.components.encoder.vit.AudioDeiT
   decoders:
     classify:
       _target_: src.models.components.decoder.buncher_classifier.ClassifierBuncher
       classifier:
         _target_: torch.nn.Linear
-        in_features: 192
+        in_features: 960
         out_features: 5
       buncher:
         _target_: torch.nn.Sequential
         _args_:
           - _target_: src.models.components.layer.pooler.AvgPooler
           - _target_: src.models.components.layer.base.LambdaLayer
-            lambda_func: "lambda x: x.unsqueeze(-1).unsqueeze(-1)"
+            lambda_func: "lambda x: x.squeeze(1).unsqueeze(-1).unsqueeze(-1)"
+  gmm:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: torch.nn.Dropout
+        p: 0.25
+      - _target_: torch.nn.Linear
+        in_features: "${sum_all:
+          ${....decoders.classify.classifier.in_features},
+          ${....decoders.classify.classifier.out_features}
+        }" # 192 + 5 + 2
+        out_features: 32
+      - _target_: torch.nn.PReLU
+      - _target_: torch.nn.Linear
+        in_features: ${..1.out_features}
+        out_features: 32 # n_gmm
+  decoder_post:
+    _target_: src.models.components.nets.classify_decoder_post
+    _partial_: True
+gmm_loss:
+  _target_: src.models.components.layer.loss.GMMLoss
+  n_gmm: ${..net.gmm._args_.3.out_features}
 
 losses:
   classify:
@@ -30,6 +51,7 @@ losses:
 losses_weights:
   classify:
     ce: 1.0
+  gmm: 1.0
 
 metrics:
   classify:

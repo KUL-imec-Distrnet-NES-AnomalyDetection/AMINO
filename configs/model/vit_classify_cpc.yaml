@@ -1,0 +1,14 @@
+defaults:
+  - vit_classify
+
+losses:
+  encoder_features:
+    cpc:
+      _target_: src.models.components.layer.loss.CPCloss
+      enc_dimension: 192
+      ar_dimension: 64
+      predict_size: 5
+
+losses_weights:
+  encoder_features:
+    cpc: 0.7

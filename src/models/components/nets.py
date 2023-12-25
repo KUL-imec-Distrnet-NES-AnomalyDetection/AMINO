@@ -1,6 +1,11 @@
 import torch
 import torch.nn as nn
 
+from src.models.components.decoder.reconstruction import compute_reconstruction
+
+
+def spectrogram_hook(model, input, output):
+    return output.transpose(-1, -2)
 
 # https://github.com/qmpzzpmq/AMINO/blob/main/examples/audioset/conf/HF_enc_classifier.yaml
 class TimerSeriesClassifier(nn.Module):
@@ -23,19 +28,54 @@ class TimerSeriesClassifier(nn.Module):
 
 
 class SingleEncMultiDec(nn.Module):
-    def __init__(self, encoder, decoders) -> None:
+    def __init__(self, spectrogram, encoder, decoders) -> None:
         super().__init__()
+        spectrogram.register_forward_hook(spectrogram_hook)
+        self.spectrogram = spectrogram
         self.encoder = encoder
         self.decoders = nn.ModuleDict(decoders)
 
     def forward(self, x):
         # x: Batch, Time, Features
-        x = self.encoder(x)
-        # x: Batch, Time, Features
-        output = dict()
+        x = self.spectrogram(x)
+        h = self.encoder(x)
+        output = {
+            "features": x,
+            "encoder_features": h, # for cpc
+        }
         for name, decoder in self.decoders.items():
-            output[name] = decoder(x)
+            output[name] = decoder(h)
         return output
+
+def classify_decoder_post(decoder_dict):
+    output_dict = dict()
+    merged = torch.cat(
+        [
+            decoder_dict["encoder_features"],
+            decoder_dict["classify"]["classify"],
+        ],
+        dim=-1,
+    )
+    for key, value in decoder_dict.items():
+        if key == "classify":
+            output_dict[key] = value["bunch"]
+        else:
+            output_dict[key] = value
+    return merged, output_dict
+
+
+class SingleEncMultiDecWithGMM(SingleEncMultiDec):
+    def __init__(self, spectrogram, encoder, decoders, gmm, decoder_post) -> None:
+        super().__init__(spectrogram, encoder, decoders)
+        self.gmm = gmm
+        self.decoder_post = decoder_post
+
+    def forward(self, x):
+        decoder_dict = super().forward(x)
+        gmm_input, decoder_dict = self.decoder_post(decoder_dict)
+        decoder_dict["gmm_input"] = gmm_input
+        decoder_dict["gmm_output"] = self.gmm(gmm_input)
+        return decoder_dict
 
 
 if __name__ == "__main__":

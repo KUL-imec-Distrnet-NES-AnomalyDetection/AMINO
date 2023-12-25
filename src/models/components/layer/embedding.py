@@ -18,5 +18,5 @@ class PositionalEncoding(nn.Module):
         encoding[:, 1::2] = torch.cos(pos * div_term)
         self.encoding = nn.Parameter(encoding.unsqueeze(0), requires_grad=False)
 
-    def forward(self, x):
-        return x + self.encoding[:, : x.size(1), :]
+    def forward(self, seq_len):
+        return self.encoding[:, : seq_len, :]

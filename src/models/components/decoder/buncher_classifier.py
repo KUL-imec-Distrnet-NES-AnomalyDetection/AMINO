@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -11,11 +10,17 @@ class BuncherClassisfier(nn.Module):
     def forward(self, x):
         h = self.buncher(x)
         y = self.classifier(h)
-        return y
+        return {
+            "classify": y,
+            "bunch": h,
+        }
 
 
 class ClassifierBuncher(BuncherClassisfier):
     def forward(self, x):
         y1 = self.classifier(x)
         y2 = self.buncher(y1)
-        return y2
+        return {
+            "classify": y1, 
+            "bunch": y2,
+        }

@@ -1,5 +1,7 @@
+from abc import ABC
 from collections import defaultdict
-from typing import Dict
+from typing import Any, Dict
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 
 import torch
 import torch.nn as nn
@@ -7,6 +9,7 @@ from flatdict import FlatDict
 from lightning import LightningModule
 
 from src.models.components.preprocess import domain_stack_extract
+from src.models.components.layer.loss import GMMLoss
 
 LOG_CONFIG = {
     "prog_bar": True,
@@ -58,8 +61,8 @@ class AdModule(LightningModule):
         for stage, stage_post in post.items():
             for post_name, post_func in stage_post.items():
                 post_dict[stage][post_name] = post_func(
-                    pred_dict[stage].squeeze(),
-                    target_dict[stage].squeeze(),
+                    pred_dict[stage],
+                    target_dict[stage],
                 )
         return post_dict
 
@@ -117,6 +120,38 @@ class AdModule(LightningModule):
             }
         return {"optimizer": optimizer}
 
+
+class GMMModule(AdModule):
+    def __init__(
+        self,
+        net,
+        losses=None,
+        losses_weights=None,
+        metrics=None,
+        optimizer: torch.optim.Optimizer = None,
+        scheduler: torch.optim.lr_scheduler = None,
+        scheduler_conf: Dict = None,
+        gmm_loss: torch.nn.Module = GMMLoss(0.7, 0.3),
+    ):
+        super().__init__(
+            net=net,
+            losses=losses,
+            losses_weights=losses_weights,
+            metrics=metrics,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            scheduler_conf=scheduler_conf,
+        )
+        self.gmm_loss = gmm_loss
+
+    def model_step(self, batch, batch_idx):
+        feature_dict, label_dict, pred_dict, loss_dict, metric_dict = super().model_step(
+            batch, batch_idx
+        )
+        gmm_loss = self.gmm_loss(pred_dict["gmm_output"], pred_dict["gmm_input"])
+        loss_dict["gmm"] = gmm_loss
+        loss_dict["totoal"] += gmm_loss * self.losses_weights["gmm"]
+        return feature_dict, label_dict, pred_dict, loss_dict, metric_dict
 
 if __name__ == "__main__":
     import hydra

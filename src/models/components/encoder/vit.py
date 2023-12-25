@@ -16,60 +16,44 @@ DEIT_MODEL_NAMES = [
 ]
 
 
-def deit_patch_embedding_model_convert(ori_patch_embedding_model):
-    # convert the deit embedding model to
-    # the audio deit embedding model
-    # the input of the audio deit embedding model is just the spectrogram with 1 channel bactchx1xtimexfeature
-    # the input of the original deit embedding model is the image with 3 channel batchx3x224x224.
-    # the output of the audio deit embedding model is the same as the original deit embedding model, batchx768.
-    patch_embedding_model = AusdioDeiTPatchEmbeddings(
-        1,
-        ori_patch_embedding_model.projection.out_channels,
-        ori_patch_embedding_model.patch_size,
-    )
-    return patch_embedding_model
-
-
 class AudioDeiTEmbeddings(nn.Module):
-    def __init__(self, patch_embedding_model, position_embedding_model, dropout):
+    def __init__(self, patch_embedding, position_embedding, dropout):
         super().__init__()
-        self.patch_embeddings = patch_embedding_model
-        self.position_embeddings = position_embedding_model
+        self.patch_embedding = patch_embedding
+        self.position_embedding = position_embedding
         self.dropout = dropout
 
     def forward(self, x):
-        embeddings = self.patch_embeddings(x)
-        embeddings += self.position_embeddings(embeddings)
-        embeddings = self.dropout(embeddings)
-        return embeddings
+        # x: Batch, 1, Time, Features
+
+        # Batch, 1, Time, Features
+        # -> Batch, Channel, Time, Features
+        # -> Batch, Channel, Patch
+        # -> Batch, Patch, Channel
+        embeddings = self.patch_embedding(x)
+        num_patch_in_time = embeddings.size(-2)
+        embeddings = embeddings.flatten(2).transpose(1, 2)
+        position_embeddings = self.position_embedding(embeddings.size(1))
+        embeddings = self.dropout(embeddings + position_embeddings)
+        return embeddings, num_patch_in_time
 
     @classmethod
     def from_DeiTEmbeddings(cls, ori_embeddings):
+        patch_embedding = nn.Conv2d(
+            1,
+            ori_embeddings.patch_embeddings.projection.out_channels,
+            kernel_size=ori_embeddings.patch_embeddings.patch_size,
+            stride=ori_embeddings.patch_embeddings.patch_size,
+        )
+        position_embedding=PositionalEncoding(
+            ori_embeddings.patch_embeddings.projection.out_channels,
+            ori_embeddings.patch_embeddings.num_patches * 10,
+        )
         return cls(
-            patch_embedding_model=deit_patch_embedding_model_convert(
-                ori_embeddings.patch_embeddings
-            ),
-            position_embedding_model=PositionalEncoding(
-                ori_embeddings.position_embeddings.size(-1),
-                ori_embeddings.patch_embeddings.num_patches * 10,
-            ),
+            patch_embedding=patch_embedding,
+            position_embedding=position_embedding,
             dropout=ori_embeddings.dropout,
         )
-
-
-class AusdioDeiTPatchEmbeddings(nn.Module):
-    def __init__(self, num_channels, hidden_size, patch_size):
-        super().__init__()
-        self.projection = nn.Conv2d(
-            num_channels,
-            hidden_size,
-            kernel_size=patch_size,
-            stride=patch_size,
-        )
-
-    def forward(self, x):
-        x = self.projection(x).flatten(2).transpose(1, 2)
-        return x
 
 
 class AudioDeiT(nn.Module):
@@ -94,7 +78,7 @@ class AudioDeiT(nn.Module):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ):
-        embedding_output = self.embeddings(spectral)
+        embedding_output, num_patch_in_time = self.embeddings(spectral)
         encoder_outputs = self.encoder(
             embedding_output,
             head_mask=head_mask,
@@ -104,7 +88,7 @@ class AudioDeiT(nn.Module):
         )
         sequence_output = encoder_outputs[0]
         sequence_output = self.layernorm(sequence_output)
-        return sequence_output
+        return sequence_output.unflatten(-2, (num_patch_in_time, -1)).flatten(2).unsqueeze(1)
 
 
 class WavAudioDeiT(AudioDeiT):
@@ -125,10 +109,13 @@ class WavAudioDeiT(AudioDeiT):
 if __name__ == "__main__":
     from torchaudio.transforms import MelSpectrogram
 
+    from src.models.components.nets import spectrogram_hook
+
     fs = 16000
     duration = 5
     batch_size = 5
     spectral_tranform = MelSpectrogram()
+    spectral_tranform.register_forward_hook(spectrogram_hook)
     model = AudioDeiT()
 
     audio = torch.randn(1, duration * fs).unsqueeze(1)

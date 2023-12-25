@@ -10,6 +10,15 @@ class LabelAdder(Mapper):
     def item_func(self, item):
         item[1].set(("labels", "classify"), self.label)
         return item
+    
+class DummpyAdder(Mapper):
+    def __init__(self, dp, name="encoder_features"):
+        super().__init__(dp, self.item_func)
+        self.name = name
+
+    def item_func(self, item):
+        item[1].set(("labels", self.name), torch.empty((1, 0)))
+        return item
 
 
 if __name__ == "__main__":

@@ -47,6 +47,8 @@ datapipes:
         buffer_size: 20000
       - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
         _partial_: True
+      - _target_: src.data.components.classify.DummpyAdder
+        _partial_: True
       - _target_: src.data.components.base_datapipes.DPAudioRead
         _partial_: True
       - _target_: torchdata.datapipes.iter.Batcher
@@ -86,7 +88,10 @@ datapipes:
           path: "data/mimii_due/valve/source_test"
           is_train: False
     process_datapipes:
-      - _target_: torchdata.datapipes.iter.ShardingFilter # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+      # https://pytorch.org/data/main/dlv2_tutorial.html#datapipe
+      - _target_: torchdata.datapipes.iter.ShardingFilter 
+        _partial_: True
+      - _target_: src.data.components.classify.DummpyAdder
         _partial_: True
       - _target_: src.data.components.base_datapipes.DPAudioRead
         _partial_: True
