@@ -145,13 +145,18 @@ class GMMModule(AdModule):
         self.gmm_loss = gmm_loss
 
     def model_step(self, batch, batch_idx):
-        feature_dict, label_dict, pred_dict, loss_dict, metric_dict = super().model_step(
-            batch, batch_idx
-        )
+        (
+            feature_dict,
+            label_dict,
+            pred_dict,
+            loss_dict,
+            metric_dict,
+        ) = super().model_step(batch, batch_idx)
         gmm_loss = self.gmm_loss(pred_dict["gmm_output"], pred_dict["gmm_input"])
         loss_dict["gmm"] = gmm_loss
-        loss_dict["totoal"] += gmm_loss * self.losses_weights["gmm"]
+        loss_dict["total"] += gmm_loss * self.losses_weights["gmm"]
         return feature_dict, label_dict, pred_dict, loss_dict, metric_dict
+
 
 if __name__ == "__main__":
     import hydra

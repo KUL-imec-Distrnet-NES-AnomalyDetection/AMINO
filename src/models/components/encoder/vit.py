@@ -45,7 +45,7 @@ class AudioDeiTEmbeddings(nn.Module):
             kernel_size=ori_embeddings.patch_embeddings.patch_size,
             stride=ori_embeddings.patch_embeddings.patch_size,
         )
-        position_embedding=PositionalEncoding(
+        position_embedding = PositionalEncoding(
             ori_embeddings.patch_embeddings.projection.out_channels,
             ori_embeddings.patch_embeddings.num_patches * 10,
         )
@@ -88,7 +88,11 @@ class AudioDeiT(nn.Module):
         )
         sequence_output = encoder_outputs[0]
         sequence_output = self.layernorm(sequence_output)
-        return sequence_output.unflatten(-2, (num_patch_in_time, -1)).flatten(2).unsqueeze(1)
+        return (
+            sequence_output.unflatten(-2, (num_patch_in_time, -1))
+            .flatten(2)
+            .unsqueeze(1)
+        )
 
 
 class WavAudioDeiT(AudioDeiT):

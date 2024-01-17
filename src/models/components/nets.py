@@ -7,6 +7,7 @@ from src.models.components.decoder.reconstruction import compute_reconstruction
 def spectrogram_hook(model, input, output):
     return output.transpose(-1, -2)
 
+
 # https://github.com/qmpzzpmq/AMINO/blob/main/examples/audioset/conf/HF_enc_classifier.yaml
 class TimerSeriesClassifier(nn.Module):
     def __init__(self, encoder, classifier, buncher):
@@ -41,11 +42,12 @@ class SingleEncMultiDec(nn.Module):
         h = self.encoder(x)
         output = {
             "features": x,
-            "encoder_features": h, # for cpc
+            "encoder_features": h,  # for cpc
         }
         for name, decoder in self.decoders.items():
             output[name] = decoder(h)
         return output
+
 
 def classify_decoder_post(decoder_dict):
     output_dict = dict()

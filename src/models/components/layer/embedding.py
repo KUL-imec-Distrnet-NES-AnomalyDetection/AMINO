@@ -19,4 +19,4 @@ class PositionalEncoding(nn.Module):
         self.encoding = nn.Parameter(encoding.unsqueeze(0), requires_grad=False)
 
     def forward(self, seq_len):
-        return self.encoding[:, : seq_len, :]
+        return self.encoding[:, :seq_len, :]

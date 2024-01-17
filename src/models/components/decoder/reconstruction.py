@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 
+
 def compute_reconstruction(x, x_hat):
     # cosine_similarity: (batch, time)
     cosine_similarity = F.cosine_similarity(x, x_hat, dim=-1)

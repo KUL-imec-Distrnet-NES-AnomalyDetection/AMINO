@@ -41,7 +41,8 @@ net:
     _partial_: True
 gmm_loss:
   _target_: src.models.components.layer.loss.GMMLoss
-  n_gmm: ${..net.gmm._args_.3.out_features}
+  weight_energy: 0.5
+  weight_cov: 0.5
 
 losses:
   classify:

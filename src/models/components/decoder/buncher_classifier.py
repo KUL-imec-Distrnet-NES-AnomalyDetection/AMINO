@@ -21,6 +21,6 @@ class ClassifierBuncher(BuncherClassisfier):
         y1 = self.classifier(x)
         y2 = self.buncher(y1)
         return {
-            "classify": y1, 
+            "classify": y1,
             "bunch": y2,
         }
